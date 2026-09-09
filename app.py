@@ -8,9 +8,13 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# 🎯 உங்கள் Gemini API Key-ஐ கீழே உள்ள இரட்டை மேற்கோள் குறிக்குள் (" ") நேரடியாகப் பேஸ்ட் செய்யுங்க:
+# 🎯 Render environment variables-ல் இருந்து API Key-ஐ தானாக எடுத்துக்கொள்ளும்
+API_KEY = os.environ.get("GEMINI_API_KEY")
 
-genai.configure(api_key=API_KEY)
+if API_KEY:
+    genai.configure(api_key=API_KEY)
+else:
+    print("Warning: GEMINI_API_KEY environment variable is not set.")
 
 # ஹெல்த்கேர் சாட்பாட்டுக்கான முக்கியமான கட்டளை (Prompt)
 HEALTH_PROMPT = """
@@ -30,8 +34,9 @@ CRITICAL RULES FOR EMOJIS & TONE:
 - If the user's query is vague or unclear, ask a friendly follow-up question for clarification.
 """
 
+# Note: Render and production stable runtime-க்காக gemini-1.5-flash அல்லது gemini-2.5-flash உபயோகிக்கலாம்.
 model = genai.GenerativeModel(
-    model_name="gemini-3.7-flash",
+    model_name="gemini-1.5-flash",
     system_instruction=HEALTH_PROMPT
 )
 
@@ -41,6 +46,9 @@ def home():
 
 @app.route('/get_response', methods=['POST'])
 def get_bot_response():
+    if not API_KEY:
+        return jsonify({"response": "Server Configuration Error: API Key is missing."}), 500
+        
     user_message = request.json.get("message")
     if not user_message:
         return jsonify({"response": "Please type something."})
@@ -54,4 +62,8 @@ def get_bot_response():
         
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Render deployment-ல் ஆப் முடங்காமல் இருக்க host மற்றும் port கட்டாயம் தேவை
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)
+
+
