@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All-in-One Healthcare AI</title>
+    <!-- அழகான கூகுள் ஃபான்ட்கள் -->
+    <link href="https://googleapis.com" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; font-family: 'Poppins', sans-serif; margin: 0; padding: 0; }
+        body { background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%); display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .chat-container { width: 420px; height: 600px; background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; border: 1px solid rgba(255,255,255,0.2); }
+        .chat-header { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; padding: 20px; text-align: center; font-weight: 600; font-size: 1.1rem; box-shadow: 0 4px 12px rgba(37,99,235,0.2); }
+        .chat-box { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background-color: #f8fafc; }
+        .message { padding: 12px 16px; border-radius: 16px; max-width: 85%; font-size: 0.95rem; line-height: 1.5; animation: fadeIn 0.3s ease-in-out; }
+        .user { background: #2563eb; color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
+        .bot { background: white; color: #1e293b; align-self: flex-start; border-bottom-left-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .input-area { display: flex; padding: 15px; background: white; border-top: 1px solid #e2e8f0; gap: 8px; align-items: center; }
+        .input-area input { flex: 1; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 12px; outline: none; font-size: 0.95rem; transition: all 0.2s; }
+        .input-area input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+        .btn { background: #2563eb; color: white; border: none; padding: 12px 18px; border-radius: 12px; cursor: pointer; font-weight: 600; transition: background 0.2s; }
+        .btn:hover { background: #1d4ed8; }
+        .voice-btn { background: #059669; }
+        .voice-btn:hover { background: #047857; }
+        .voice-active { animation: pulse 1.5s infinite; background: #dc2626 !important; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(220,38,38,0.4); } 70% { box-shadow: 0 0 0 10px rgba(220,38,38,0); } 100% { box-shadow: 0 0 0 0 rgba(220,38,38,0); } }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="chat-header">🏥 All-in-One Healthcare AI</div>
+    <div class="chat-box" id="chatBox">
+        <div class="message bot">வணக்கம்! நான் உங்கள் ஆல்-இன்-ஒன் ஹெல்த்கேர் AI. உங்களுக்கு இன்று நான் எவ்வாறு உதவட்டும்? நீங்கள் டைப் செய்யலாம் அல்லது மைக் பட்டனை அழுத்திப் பேசலாம். 🌿</div>
+    </div>
+    <div class="input-area">
+        <button class="btn voice-btn" id="voiceBtn" onclick="toggleVoice()" title="பேசி டைப் செய்ய">🎤</button>
+        <input type="text" id="userInput" placeholder="உங்கள் கேள்வியை இங்கே கேளுங்கள்..." onkeypress="handleKeyPress(event)">
+        <button class="btn" onclick="sendMessage()">அனுப்பு</button>
+    </div>
+</div>
+
+<script>
+    // வாய்ஸ் டைப்பிங் (Speech to Text) வசதி
+    let recognition;
+    let isListening = false;
+
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        // பயனர் தமிழ் அல்லது ஆங்கிலத்தில் பேசலாம்
+        recognition.lang = 'ta-IN'; 
+        
+        recognition.onresult = function(event) {
+            const text = event.results[0][0].transcript;
+            document.getElementById("userInput").value = text;
+            stopListening();
+        };
+
+        recognition.onerror = function() {
+            stopListening();
+        };
+
+        recognition.onend = function() {
+            stopListening();
+        };
+    }
+
+    function toggleVoice() {
+        if (!recognition) {
+            alert("மன்னிக்கவும், உங்கள் பிரவுசர் வாய்ஸ் டைப்பிங் வசதியை ஆதரிக்கவில்லை.");
+            return;
+        }
+        if (isListening) {
+            recognition.stop();
+        } else {
+            document.getElementById("voiceBtn").classList.add("voice-active");
+            document.getElementById("userInput").placeholder = "கேட்கிறது... பேசுங்கள்...";
+            isListening = true;
+            recognition.start();
+        }
+    }
+
+    function stopListening() {
+        document.getElementById("voiceBtn").classList.remove("voice-active");
+        document.getElementById("userInput").placeholder = "உங்கள் கேள்வியை இங்கே கேளுங்கள்...";
+        isListening = false;
+    }
+
+    function handleKeyPress(event) {
+        if (event.key === 'Enter') {
+            sendMessage();
+        }
+    }
+
+    function sendMessage() {
+        let input = document.getElementById("userInput");
+        let message = input.value.trim();
+        if (!message) return;
+
+        let chatBox = document.getElementById("chatBox");
+        chatBox.innerHTML += `<div class="message user">${message}</div>`;
+        input.value = "";
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        // லோடிங் காட்ட
+        let loadingId = "load-" + Date.now();
+        chatBox.innerHTML += `<div class="message bot" id="${loadingId}">பதில் யோசிக்கிறது... ⏳</div>`;
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        fetch("/get_response", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: message })
+        })
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById(loadingId).remove();
+            chatBox.innerHTML += `<div class="message bot">${data.response}</div>`;
+            chatBox.scrollTop = chatBox.scrollHeight;
+        })
+        .catch(() => {
+            document.getElementById(loadingId).remove();
+            chatBox.innerHTML += `<div class="message bot">மன்னிக்கவும், இணைப்பில் பிழை ஏற்பட்டுள்ளது.</div>`;
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+    }
+</script>
+
+</body>
+</html>
